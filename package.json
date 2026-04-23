@@ -1,0 +1,27 @@
+{
+  "name": "ika-smpn2-samarinda-portal",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Portal resmi Ikatan Keluarga Alumni SMP Negeri 2 Samarinda",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mshadianto/ika-smp2-smd.git"
+  },
+  "homepage": "https://github.com/mshadianto/ika-smp2-smd#readme",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo 'Add eslint if needed'"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0"
+  }
+}
