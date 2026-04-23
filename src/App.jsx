@@ -368,8 +368,29 @@ export default function App() {
         <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 16, fontWeight: 700, color: "#fff", marginBottom: 4 }}>
           Ikatan Keluarga Alumni SMP Negeri 2 Samarinda
         </div>
-        <div>
-          © 2026 <strong>IKA SMPN 2 Samarinda</strong> · Membangun silaturahmi alumni
+        <div style={{ fontSize: 13, opacity: 0.85 }}>
+          © {new Date().getFullYear()} <strong>IKA SMPN 2 Samarinda</strong> · Koneksi Tanpa Batas, Kolaborasi Tanpa Henti
+        </div>
+
+        <div style={{
+          marginTop: 16,
+          paddingTop: 12,
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          fontSize: 12,
+          opacity: 0.75,
+          lineHeight: 1.6
+        }}>
+          <div><strong>Lead Developer:</strong> MS Hadianto</div>
+          <div><strong>Tim Developer:</strong> Firman Ahmad</div>
+        </div>
+
+        <div style={{
+          marginTop: 10,
+          fontSize: 11,
+          opacity: 0.55,
+          fontFamily: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace"
+        }}>
+          v{__APP_VERSION__} · build {__COMMIT_HASH__} · {new Date(__BUILD_DATE__).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" })}
         </div>
       </footer>
     </div>
