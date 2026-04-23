@@ -2,8 +2,9 @@
 
 Portal resmi **Ikatan Keluarga Alumni SMP Negeri 2 Samarinda** — modular, scalable, stable.
 
-**Repo:** https://github.com/mshadianto/ika-smp2-smd
-**Deploy:** Cloudflare Pages (manual via dashboard)
+- **Live:** https://ika-smp2-smd.pages.dev
+- **Repo:** https://github.com/mshadianto/ika-smp2-smd
+- **Deploy:** Cloudflare Pages via `wrangler` Direct Upload — lihat [`DEPLOYMENT.md`](./DEPLOYMENT.md)
 
 Stack: **React 18 + Vite + Supabase**, dengan fallback otomatis ke `localStorage` bila Supabase tidak tersedia.
 
@@ -119,10 +120,10 @@ npm install
 
 ### 2. Konfigurasi Supabase
 
-Copy `.env.example` → `.env`:
+Copy `.env.example` → `.env.local`:
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
 Ambil anon key dari **Supabase Dashboard > Project Settings > API > Project API keys > `anon (public)`** dan isi:
@@ -135,15 +136,17 @@ Project URL sudah hard-coded: `https://fjodyrcbpwhdkbcbctdt.supabase.co`
 
 ### 3. Run SQL Schema
 
-Buka **Supabase Dashboard > SQL Editor**, lalu jalankan schema yang ada di comment bagian bawah file `src/config/supabase.js`.
+Buka **Supabase Dashboard > SQL Editor** → **New query** → paste seluruh isi `schema.sql` (di root repo) → **Run**.
 
-Schema tersebut akan membuat:
+File `schema.sql` idempoten (aman di-run ulang) dan akan membuat:
 
 - Tables: `alumni`, `market_items`, `umkm`, `events`, `gallery_albums`, `gallery_photos`, `forum_threads`, `forum_replies`, `admin_emails`
 - Function: `is_admin()` — cek email user terdaftar di `admin_emails`
-- RLS policies untuk setiap table
+- RLS policies untuk setiap table (di-`drop if exists` dulu, lalu `create` ulang)
 
 Admin email otomatis di-seed saat schema dijalankan.
+
+> Versi komentar di `src/config/supabase.js` adalah referensi untuk developer; sumber truth yang bisa dijalankan adalah `schema.sql`.
 
 ### 4. Dev server
 
@@ -159,6 +162,20 @@ Akses di `http://localhost:5173`.
 npm run build
 # hasil di dist/
 ```
+
+Footer otomatis menampilkan build stamp dinamis: `v{version} · build {commit_hash} · {build_date}`. Konstanta ini di-inject di build time via Vite `define` (lihat `vite.config.js`), tanpa biaya runtime.
+
+### 6. Deploy ke Cloudflare Pages
+
+Repo ini sudah ter-link ke project Cloudflare Pages `ika-smp2-smd`. Deploy ulang setelah perubahan:
+
+```bash
+git add -A && git commit -m "..." && git push
+npm run build
+wrangler pages deploy dist --project-name=ika-smp2-smd --branch=main
+```
+
+Commit **sebelum** build supaya `__COMMIT_HASH__` di footer cocok dengan commit yang live. Detail lengkap + smoke test checklist ada di [`DEPLOYMENT.md`](./DEPLOYMENT.md).
 
 ---
 
@@ -236,4 +253,7 @@ Ganti ID untuk mengupdate video tanpa refactor.
 
 Dibangun untuk **Ikatan Keluarga Alumni SMP Negeri 2 Samarinda**.
 
-© 2026 IKA SMPN 2 Samarinda.
+- **Lead Developer:** MS Hadianto
+- **Tim Developer:** Firman Ahmad
+
+© 2026 IKA SMPN 2 Samarinda · *Koneksi Tanpa Batas, Kolaborasi Tanpa Henti.*
