@@ -3,6 +3,7 @@ import { Modal, InfoBanner } from "./Primitives";
 import { Icon } from "./Icons";
 import { uid } from "../utils/format";
 import { KAT_MARKET, KAT_UMKM, KAT_GALLERY, KAT_FORUM, KELAS_OPTIONS } from "../config/constants";
+import { uploadImages, validateImageFile } from "../utils/imageUpload";
 
 // ============================================================
 // Entity Forms
@@ -344,7 +345,7 @@ export function UmkmForm({ item, alumni, onSave, onClose }) {
   );
 }
 
-// ---- Gallery Form ----
+// ---- Gallery Form (with Supabase Storage upload + client-side compression) ----
 export function GalleryForm({ item, alumni, onSave, onClose }) {
   const isEdit = Boolean(item?.id);
   const [f, setF] = useState(
@@ -353,31 +354,93 @@ export function GalleryForm({ item, alumni, onSave, onClose }) {
           judul: item.judul || "",
           album: item.album || "Reuni",
           deskripsi: item.deskripsi || "",
+          tanggal: item.tanggal || new Date().toISOString().slice(0, 10),
           uploadBy: item.uploadBy || "",
-          photoCount: item.photos?.length || 0,
+          photos: item.photos || [],
         }
-      : { judul: "", album: "Reuni", deskripsi: "", uploadBy: "", photoCount: 4 }
+      : {
+          judul: "",
+          album: "Reuni",
+          deskripsi: "",
+          tanggal: new Date().toISOString().slice(0, 10),
+          uploadBy: "",
+          photos: [],
+        }
   );
-  const [saving, setSaving] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(null);
+  const [error, setError] = useState("");
   const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
-  const colors = [
-    "#1B3A5C",
-    "#2A5F8F",
-    "#E8B84B",
-    "#5DADE2",
-    "#27AE60",
-    "#1A5276",
-    "#2980B9",
-    "#C9952A",
-    "#154360",
-    "#3498DB",
-    "#148F77",
-    "#6C3483",
-  ];
 
-  const submit = async () => {
-    setSaving(true);
+  useEffect(() => {
+    return () => {
+      previews.forEach((p) => p.url && URL.revokeObjectURL(p.url));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleFileSelect = (e) => {
+    const selected = Array.from(e.target.files || []);
+    if (selected.length === 0) return;
+
+    const errors = [];
+    const valid = [];
+    selected.forEach((file) => {
+      const err = validateImageFile(file);
+      if (err) errors.push(`${file.name}: ${err}`);
+      else valid.push(file);
+    });
+
+    setError(errors.length > 0 ? errors.join("\n") : "");
+    setFiles((prev) => [...prev, ...valid]);
+    setPreviews((prev) => [
+      ...prev,
+      ...valid.map((file) => ({
+        name: file.name,
+        size: file.size,
+        url: URL.createObjectURL(file),
+      })),
+    ]);
+
+    e.target.value = "";
+  };
+
+  const removeFile = (index) => {
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setPreviews((prev) => {
+      if (prev[index]?.url) URL.revokeObjectURL(prev[index].url);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const totalSizeMB = previews.reduce((s, p) => s + p.size, 0) / 1024 / 1024;
+
+  const handleSave = async () => {
+    if (!f.judul) return setError("Judul album wajib diisi");
+    if (!isEdit && !f.uploadBy) return setError("Pilih penanggung jawab");
+    if (!isEdit && files.length === 0) return setError("Pilih minimal 1 foto");
+
+    setError("");
+    setUploading(true);
+
     try {
+      let newPhotos = [];
+      if (files.length > 0) {
+        const folder = `albums/${Date.now()}`;
+        const results = await uploadImages(files, folder, setProgress);
+        const failed = results.filter((r) => r.error);
+        if (failed.length > 0) {
+          throw new Error(`${failed.length} foto gagal upload: ${failed[0].error}`);
+        }
+        newPhotos = results.map((r, i) => ({
+          imageUrl: r.url,
+          caption: previews[i]?.name?.replace(/\.[^.]+$/, "") || `Foto ${i + 1}`,
+          color: "#1B3A5C",
+        }));
+      }
+
       if (isEdit) {
         await onSave({
           id: item.id,
@@ -386,52 +449,105 @@ export function GalleryForm({ item, alumni, onSave, onClose }) {
           deskripsi: f.deskripsi,
         });
       } else {
-        const photos = Array.from({ length: Number(f.photoCount) || 3 }, (_, i) => ({
-          id: "p" + uid(),
-          caption: `Foto ${i + 1} - ${f.judul}`,
-          color: colors[i % colors.length],
-        }));
         await onSave({
           id: "g" + uid(),
           judul: f.judul,
           album: f.album,
           deskripsi: f.deskripsi,
-          tanggal: new Date().toISOString().slice(0, 10),
+          tanggal: f.tanggal,
           uploadBy: f.uploadBy,
-          photos,
+          photos: newPhotos,
         });
       }
+
+      previews.forEach((p) => p.url && URL.revokeObjectURL(p.url));
       onClose();
+    } catch (e) {
+      setError(e.message);
     } finally {
-      setSaving(false);
+      setUploading(false);
+      setProgress(null);
     }
   };
 
   return (
     <Modal
-      title={isEdit ? "Edit Album" : "Upload Album"}
-      onClose={onClose}
+      title={isEdit ? "Edit Album" : "Upload Album Baru"}
+      onClose={uploading ? () => {} : onClose}
       footer={
         <>
-          <button className="btn bo" onClick={onClose}>
+          <button className="btn bo" onClick={onClose} disabled={uploading}>
             Batal
           </button>
-          <button
-            className="btn bp"
-            onClick={submit}
-            disabled={saving || !f.judul || (!isEdit && !f.uploadBy)}
-          >
-            {saving ? (isEdit ? "Menyimpan..." : "Mengupload...") : isEdit ? "Simpan Perubahan" : "Upload"}
+          <button className="btn bp" onClick={handleSave} disabled={uploading}>
+            {uploading
+              ? "Mengupload..."
+              : isEdit
+              ? "Simpan Perubahan"
+              : `Upload ${files.length} Foto`}
           </button>
         </>
       }
     >
+      {error && (
+        <div
+          style={{
+            padding: 12,
+            marginBottom: 16,
+            background: "#FEE",
+            color: "#B71C1C",
+            borderRadius: 8,
+            fontSize: 13,
+            whiteSpace: "pre-line",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="fg">
+        <label className="fl">Judul Album *</label>
+        <input
+          className="fi"
+          value={f.judul}
+          onChange={(e) => u("judul", e.target.value)}
+          placeholder="cth: Reuni Akbar 2026"
+          disabled={uploading}
+        />
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="fg">
+          <label className="fl">Kategori</label>
+          <select className="fs" value={f.album} onChange={(e) => u("album", e.target.value)} disabled={uploading}>
+            {KAT_GALLERY.filter((k) => k !== "Semua").map((k) => (
+              <option key={k}>{k}</option>
+            ))}
+          </select>
+        </div>
+        <div className="fg">
+          <label className="fl">Tanggal</label>
+          <input
+            type="date"
+            className="fi"
+            value={f.tanggal}
+            onChange={(e) => u("tanggal", e.target.value)}
+            disabled={uploading || isEdit}
+          />
+        </div>
+      </div>
+
       {!isEdit && (
         <div className="fg">
-          <label className="fl">Oleh *</label>
-          <select className="fs" value={f.uploadBy} onChange={(e) => u("uploadBy", e.target.value)}>
-            <option value="">Pilih</option>
-            {alumni.map((a) => (
+          <label className="fl">Penanggung Jawab *</label>
+          <select
+            className="fs"
+            value={f.uploadBy}
+            onChange={(e) => u("uploadBy", e.target.value)}
+            disabled={uploading}
+          >
+            <option value="">-- Pilih alumni --</option>
+            {alumni?.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.nama}
               </option>
@@ -439,30 +555,160 @@ export function GalleryForm({ item, alumni, onSave, onClose }) {
           </select>
         </div>
       )}
-      <div className="fg">
-        <label className="fl">Judul Album *</label>
-        <input className="fi" value={f.judul} onChange={(e) => u("judul", e.target.value)} />
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: isEdit ? "1fr" : "1fr 1fr", gap: 12 }}>
-        <div className="fg">
-          <label className="fl">Kategori</label>
-          <select className="fs" value={f.album} onChange={(e) => u("album", e.target.value)}>
-            {KAT_GALLERY.filter((k) => k !== "Semua").map((k) => (
-              <option key={k}>{k}</option>
-            ))}
-          </select>
-        </div>
-        {!isEdit && (
-          <div className="fg">
-            <label className="fl">Jumlah Foto</label>
-            <input className="fi" type="number" min="1" max="20" value={f.photoCount} onChange={(e) => u("photoCount", e.target.value)} />
-          </div>
-        )}
-      </div>
+
       <div className="fg">
         <label className="fl">Deskripsi</label>
-        <textarea className="ft" value={f.deskripsi} onChange={(e) => u("deskripsi", e.target.value)} />
+        <textarea
+          className="ft"
+          rows={2}
+          value={f.deskripsi}
+          onChange={(e) => u("deskripsi", e.target.value)}
+          disabled={uploading}
+        />
       </div>
+
+      {!isEdit && (
+        <div className="fg">
+          <label className="fl">
+            Foto *
+            <span style={{ fontSize: 11, color: "var(--txl)", marginLeft: 8, fontWeight: 400 }}>
+              (JPG/PNG/WebP, otomatis dikompres ke ~500 KB)
+            </span>
+          </label>
+          <label
+            htmlFor="photo-upload"
+            style={{
+              display: "block",
+              padding: "28px 20px",
+              textAlign: "center",
+              border: "2px dashed var(--bd)",
+              borderRadius: 12,
+              background: "var(--bg2)",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+              transition: "all 0.2s",
+            }}
+          >
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📷</div>
+            <div style={{ fontWeight: 600, color: "var(--c1)" }}>Klik untuk pilih foto</div>
+            <div style={{ fontSize: 12, color: "var(--txm)", marginTop: 4 }}>
+              Bisa pilih beberapa sekaligus (Ctrl/Cmd + click)
+            </div>
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              disabled={uploading}
+            />
+          </label>
+        </div>
+      )}
+
+      {previews.length > 0 && (
+        <div className="fg">
+          <label className="fl">
+            {previews.length} foto siap upload
+            <span style={{ fontSize: 11, color: "var(--txl)", marginLeft: 8, fontWeight: 400 }}>
+              (~{totalSizeMB.toFixed(1)} MB sebelum kompresi)
+            </span>
+          </label>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(80px, 1fr))",
+              gap: 8,
+              marginTop: 8,
+            }}
+          >
+            {previews.map((p, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                <img
+                  src={p.url}
+                  alt={p.name}
+                  style={{
+                    width: "100%",
+                    aspectRatio: "1",
+                    objectFit: "cover",
+                    borderRadius: 6,
+                    border: "1px solid var(--bd)",
+                    display: "block",
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeFile(i)}
+                  disabled={uploading}
+                  style={{
+                    position: "absolute",
+                    top: -6,
+                    right: -6,
+                    width: 20,
+                    height: 20,
+                    borderRadius: "50%",
+                    background: "var(--err)",
+                    color: "white",
+                    border: "none",
+                    fontSize: 12,
+                    cursor: uploading ? "not-allowed" : "pointer",
+                    lineHeight: 1,
+                    padding: 0,
+                  }}
+                  title="Hapus"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isEdit && f.photos?.length > 0 && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: 12,
+            background: "var(--c1p)",
+            borderRadius: 8,
+            fontSize: 13,
+            color: "var(--c1)",
+          }}
+        >
+          <strong>{f.photos.length} foto</strong> sudah ada di album ini. Edit saat ini hanya memperbarui metadata album;
+          foto existing tidak diubah.
+        </div>
+      )}
+
+      {uploading && (
+        <div
+          style={{
+            padding: 12,
+            marginTop: 16,
+            background: "var(--skyp)",
+            borderRadius: 8,
+            fontSize: 13,
+          }}
+        >
+          <div style={{ marginBottom: 6, fontWeight: 600 }}>
+            {progress
+              ? `Mengupload ${progress.completed}/${progress.total} (${progress.percent}%)`
+              : "Mengkompres foto..."}
+          </div>
+          <div style={{ height: 6, background: "rgba(255,255,255,0.5)", borderRadius: 3, overflow: "hidden" }}>
+            <div
+              style={{
+                height: "100%",
+                background: "var(--c1)",
+                width: progress ? `${progress.percent}%` : "10%",
+                transition: "width 0.3s",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }
@@ -654,8 +900,16 @@ export function Lightbox({ photos, index, onClose, onNav }) {
       >
         <Icon.ChevLeft />
       </button>
-      <div className="lb-img" style={{ background: p.color }} onClick={(e) => e.stopPropagation()}>
-        📷
+      <div
+        className="lb-img"
+        style={{
+          background: p.imageUrl ? `url(${p.imageUrl}) center/contain no-repeat black` : p.color,
+          color: "white",
+          fontSize: 48,
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {!p.imageUrl && "📷"}
       </div>
       <div className="lb-cap">
         {p.caption} — {index + 1}/{photos.length}
