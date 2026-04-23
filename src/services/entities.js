@@ -210,6 +210,34 @@ export const galleryService = {
     return record;
   },
 
+  async update(id, patch) {
+    if (USE_SUPABASE) {
+      try {
+        const { data, error } = await supabase
+          .from(TABLES.GALLERY)
+          .update({
+            judul: patch.judul,
+            album_kategori: patch.album,
+            deskripsi: patch.deskripsi,
+          })
+          .eq("id", id)
+          .select()
+          .single();
+        if (error) throw error;
+        const list = await this.list();
+        return list.find((g) => g.id === data.id);
+      } catch (e) {
+        console.warn("[gallery] Supabase update failed:", e.message);
+      }
+    }
+    const list = await this.list();
+    const next = list.map((g) =>
+      g.id === id ? { ...g, judul: patch.judul, album: patch.album, deskripsi: patch.deskripsi } : g
+    );
+    await storage.setJSON("ika_gallery_v4", next);
+    return next.find((g) => g.id === id);
+  },
+
   async remove(id) {
     if (USE_SUPABASE) {
       try {
@@ -267,6 +295,31 @@ export const forumService = {
     if (cached) return cached;
     await storage.setJSON("ika_forum_v4", SEED_FORUM);
     return SEED_FORUM;
+  },
+
+  async updateThread(id, patch) {
+    if (USE_SUPABASE) {
+      try {
+        const { error } = await supabase
+          .from(TABLES.FORUM)
+          .update({
+            judul: patch.judul,
+            kategori: patch.kategori,
+            konten: patch.konten,
+          })
+          .eq("id", id);
+        if (error) throw error;
+        return true;
+      } catch (e) {
+        console.warn("[forum] updateThread failed:", e.message);
+      }
+    }
+    const list = await this.list();
+    const next = list.map((t) =>
+      t.id === id ? { ...t, judul: patch.judul, kategori: patch.kategori, konten: patch.konten } : t
+    );
+    await storage.setJSON("ika_forum_v4", next);
+    return true;
   },
 
   async createThread(thread) {

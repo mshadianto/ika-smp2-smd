@@ -9,7 +9,7 @@ import { KAT_UMKM } from "../config/constants";
 // Anyone can register UMKM; admin can moderate/delete.
 // ============================================================
 
-export function UmkmPage({ items, alumni, isAdmin, onCreate, onDelete }) {
+export function UmkmPage({ items, alumni, isAdmin, onCreate, onEdit, onDelete }) {
   const [q, setQ] = useState("");
   const [kat, setKat] = useState("Semua");
 
@@ -66,14 +66,24 @@ export function UmkmPage({ items, alumni, isAdmin, onCreate, onDelete }) {
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
                 <div className="ul">{(u.namaUsaha?.[0] || "?").toUpperCase()}</div>
                 {isAdmin && (
-                  <button
-                    className="btn bgh bsm"
-                    style={{ padding: 4, color: "var(--err)" }}
-                    onClick={() => onDelete(u.id)}
-                    title="Hapus"
-                  >
-                    <Icon.Trash />
-                  </button>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      className="btn bgh bsm"
+                      style={{ padding: 4 }}
+                      onClick={() => onEdit(u)}
+                      title="Edit"
+                    >
+                      <Icon.Edit />
+                    </button>
+                    <button
+                      className="btn bgh bsm"
+                      style={{ padding: 4, color: "var(--err)" }}
+                      onClick={() => onDelete(u.id)}
+                      title="Hapus"
+                    >
+                      <Icon.Trash />
+                    </button>
+                  </div>
                 )}
               </div>
               <h4 style={{ fontSize: 17, fontWeight: 700, marginBottom: 4 }}>{u.namaUsaha}</h4>

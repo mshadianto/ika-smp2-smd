@@ -345,8 +345,19 @@ export function UmkmForm({ item, alumni, onSave, onClose }) {
 }
 
 // ---- Gallery Form ----
-export function GalleryForm({ alumni, onSave, onClose }) {
-  const [f, setF] = useState({ judul: "", album: "Reuni", deskripsi: "", uploadBy: "", photoCount: 4 });
+export function GalleryForm({ item, alumni, onSave, onClose }) {
+  const isEdit = Boolean(item?.id);
+  const [f, setF] = useState(
+    item
+      ? {
+          judul: item.judul || "",
+          album: item.album || "Reuni",
+          deskripsi: item.deskripsi || "",
+          uploadBy: item.uploadBy || "",
+          photoCount: item.photos?.length || 0,
+        }
+      : { judul: "", album: "Reuni", deskripsi: "", uploadBy: "", photoCount: 4 }
+  );
   const [saving, setSaving] = useState(false);
   const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
   const colors = [
@@ -367,20 +378,29 @@ export function GalleryForm({ alumni, onSave, onClose }) {
   const submit = async () => {
     setSaving(true);
     try {
-      const photos = Array.from({ length: Number(f.photoCount) || 3 }, (_, i) => ({
-        id: "p" + uid(),
-        caption: `Foto ${i + 1} - ${f.judul}`,
-        color: colors[i % colors.length],
-      }));
-      await onSave({
-        id: "g" + uid(),
-        judul: f.judul,
-        album: f.album,
-        deskripsi: f.deskripsi,
-        tanggal: new Date().toISOString().slice(0, 10),
-        uploadBy: f.uploadBy,
-        photos,
-      });
+      if (isEdit) {
+        await onSave({
+          id: item.id,
+          judul: f.judul,
+          album: f.album,
+          deskripsi: f.deskripsi,
+        });
+      } else {
+        const photos = Array.from({ length: Number(f.photoCount) || 3 }, (_, i) => ({
+          id: "p" + uid(),
+          caption: `Foto ${i + 1} - ${f.judul}`,
+          color: colors[i % colors.length],
+        }));
+        await onSave({
+          id: "g" + uid(),
+          judul: f.judul,
+          album: f.album,
+          deskripsi: f.deskripsi,
+          tanggal: new Date().toISOString().slice(0, 10),
+          uploadBy: f.uploadBy,
+          photos,
+        });
+      }
       onClose();
     } finally {
       setSaving(false);
@@ -389,35 +409,41 @@ export function GalleryForm({ alumni, onSave, onClose }) {
 
   return (
     <Modal
-      title="Upload Album"
+      title={isEdit ? "Edit Album" : "Upload Album"}
       onClose={onClose}
       footer={
         <>
           <button className="btn bo" onClick={onClose}>
             Batal
           </button>
-          <button className="btn bp" onClick={submit} disabled={saving || !f.judul || !f.uploadBy}>
-            {saving ? "Mengupload..." : "Upload"}
+          <button
+            className="btn bp"
+            onClick={submit}
+            disabled={saving || !f.judul || (!isEdit && !f.uploadBy)}
+          >
+            {saving ? (isEdit ? "Menyimpan..." : "Mengupload...") : isEdit ? "Simpan Perubahan" : "Upload"}
           </button>
         </>
       }
     >
-      <div className="fg">
-        <label className="fl">Oleh *</label>
-        <select className="fs" value={f.uploadBy} onChange={(e) => u("uploadBy", e.target.value)}>
-          <option value="">Pilih</option>
-          {alumni.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nama}
-            </option>
-          ))}
-        </select>
-      </div>
+      {!isEdit && (
+        <div className="fg">
+          <label className="fl">Oleh *</label>
+          <select className="fs" value={f.uploadBy} onChange={(e) => u("uploadBy", e.target.value)}>
+            <option value="">Pilih</option>
+            {alumni.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nama}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="fg">
         <label className="fl">Judul Album *</label>
         <input className="fi" value={f.judul} onChange={(e) => u("judul", e.target.value)} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: isEdit ? "1fr" : "1fr 1fr", gap: 12 }}>
         <div className="fg">
           <label className="fl">Kategori</label>
           <select className="fs" value={f.album} onChange={(e) => u("album", e.target.value)}>
@@ -426,10 +452,12 @@ export function GalleryForm({ alumni, onSave, onClose }) {
             ))}
           </select>
         </div>
-        <div className="fg">
-          <label className="fl">Jumlah Foto</label>
-          <input className="fi" type="number" min="1" max="20" value={f.photoCount} onChange={(e) => u("photoCount", e.target.value)} />
-        </div>
+        {!isEdit && (
+          <div className="fg">
+            <label className="fl">Jumlah Foto</label>
+            <input className="fi" type="number" min="1" max="20" value={f.photoCount} onChange={(e) => u("photoCount", e.target.value)} />
+          </div>
+        )}
       </div>
       <div className="fg">
         <label className="fl">Deskripsi</label>
@@ -440,8 +468,18 @@ export function GalleryForm({ alumni, onSave, onClose }) {
 }
 
 // ---- Forum Thread Form ----
-export function ForumThreadForm({ alumni, onSave, onClose }) {
-  const [f, setF] = useState({ judul: "", kategori: "Umum", konten: "", authorId: "" });
+export function ForumThreadForm({ item, alumni, onSave, onClose }) {
+  const isEdit = Boolean(item?.id);
+  const [f, setF] = useState(
+    item
+      ? {
+          judul: item.judul || "",
+          kategori: item.kategori || "Umum",
+          konten: item.konten || "",
+          authorId: item.authorId || "",
+        }
+      : { judul: "", kategori: "Umum", konten: "", authorId: "" }
+  );
   const [saving, setSaving] = useState(false);
   const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
@@ -449,6 +487,7 @@ export function ForumThreadForm({ alumni, onSave, onClose }) {
     setSaving(true);
     try {
       await onSave({
+        id: item?.id,
         authorId: f.authorId,
         judul: f.judul,
         kategori: f.kategori,
@@ -462,7 +501,7 @@ export function ForumThreadForm({ alumni, onSave, onClose }) {
 
   return (
     <Modal
-      title="Buat Topik"
+      title={isEdit ? "Edit Topik" : "Buat Topik"}
       onClose={onClose}
       wide
       footer={
@@ -470,23 +509,29 @@ export function ForumThreadForm({ alumni, onSave, onClose }) {
           <button className="btn bo" onClick={onClose}>
             Batal
           </button>
-          <button className="btn bp" onClick={submit} disabled={saving || !f.judul || !f.konten || !f.authorId}>
-            {saving ? "Mengirim..." : "Posting"}
+          <button
+            className="btn bp"
+            onClick={submit}
+            disabled={saving || !f.judul || !f.konten || (!isEdit && !f.authorId)}
+          >
+            {saving ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Posting"}
           </button>
         </>
       }
     >
-      <div className="fg">
-        <label className="fl">Sebagai *</label>
-        <select className="fs" value={f.authorId} onChange={(e) => u("authorId", e.target.value)}>
-          <option value="">Pilih</option>
-          {alumni.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.nama} ({a.angkatan})
-            </option>
-          ))}
-        </select>
-      </div>
+      {!isEdit && (
+        <div className="fg">
+          <label className="fl">Sebagai *</label>
+          <select className="fs" value={f.authorId} onChange={(e) => u("authorId", e.target.value)}>
+            <option value="">Pilih</option>
+            {alumni.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.nama} ({a.angkatan})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="fg">
         <label className="fl">Judul *</label>
         <input className="fi" value={f.judul} onChange={(e) => u("judul", e.target.value)} />
@@ -502,6 +547,80 @@ export function ForumThreadForm({ alumni, onSave, onClose }) {
       <div className="fg">
         <label className="fl">Isi *</label>
         <textarea className="ft" value={f.konten} onChange={(e) => u("konten", e.target.value)} style={{ minHeight: 160 }} />
+      </div>
+    </Modal>
+  );
+}
+
+// ---- Event Form (admin-only) ----
+export function EventForm({ item, onSave, onClose }) {
+  const isEdit = Boolean(item?.id);
+  const [f, setF] = useState(
+    item
+      ? {
+          judul: item.judul || "",
+          tanggal: item.tanggal || new Date().toISOString().slice(0, 10),
+          lokasi: item.lokasi || "",
+          deskripsi: item.deskripsi || "",
+          biaya: item.biaya || "",
+        }
+      : {
+          judul: "",
+          tanggal: new Date().toISOString().slice(0, 10),
+          lokasi: "",
+          deskripsi: "",
+          biaya: "",
+        }
+  );
+  const [saving, setSaving] = useState(false);
+  const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
+
+  const submit = async () => {
+    setSaving(true);
+    try {
+      await onSave({ ...f, id: item?.id || "e" + uid() });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={isEdit ? "Edit Agenda" : "Tambah Agenda"}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn bo" onClick={onClose}>
+            Batal
+          </button>
+          <button className="btn bp" onClick={submit} disabled={saving || !f.judul || !f.tanggal}>
+            {saving ? "Menyimpan..." : isEdit ? "Simpan Perubahan" : "Tambah Agenda"}
+          </button>
+        </>
+      }
+    >
+      <div className="fg">
+        <label className="fl">Judul Acara *</label>
+        <input className="fi" value={f.judul} onChange={(e) => u("judul", e.target.value)} placeholder="cth: Reuni Akbar 2026" />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="fg">
+          <label className="fl">Tanggal *</label>
+          <input className="fi" type="date" value={f.tanggal} onChange={(e) => u("tanggal", e.target.value)} />
+        </div>
+        <div className="fg">
+          <label className="fl">Biaya</label>
+          <input className="fi" value={f.biaya} onChange={(e) => u("biaya", e.target.value)} placeholder="Gratis / Rp 100.000" />
+        </div>
+      </div>
+      <div className="fg">
+        <label className="fl">Lokasi</label>
+        <input className="fi" value={f.lokasi} onChange={(e) => u("lokasi", e.target.value)} placeholder="cth: Aula SMPN 2 Samarinda" />
+      </div>
+      <div className="fg">
+        <label className="fl">Deskripsi</label>
+        <textarea className="ft" value={f.deskripsi} onChange={(e) => u("deskripsi", e.target.value)} />
       </div>
     </Modal>
   );

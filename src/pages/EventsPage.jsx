@@ -1,15 +1,14 @@
-import { useState } from "react";
 import { Icon } from "../components/Icons";
-import { Modal, EmptyState } from "../components/Primitives";
-import { fmtDate, getMonth, getDay, uid } from "../utils/format";
+import { EmptyState } from "../components/Primitives";
+import { fmtDate, getMonth, getDay } from "../utils/format";
 
 // ============================================================
 // EventsPage - agenda / event list
-// Admin-only create (enforced by RLS).
+// Admin-only create/edit (enforced by RLS). Form lives in Forms.jsx,
+// managed centrally by App.jsx.
 // ============================================================
 
-export function EventsPage({ items, isAdmin, onCreate, onDelete, onOpenLogin }) {
-  const [showForm, setShowForm] = useState(false);
+export function EventsPage({ items, isAdmin, onCreate, onEdit, onDelete, onOpenLogin }) {
   const sorted = [...items].sort((a, b) => new Date(a.tanggal) - new Date(b.tanggal));
 
   return (
@@ -20,7 +19,7 @@ export function EventsPage({ items, isAdmin, onCreate, onDelete, onOpenLogin }) 
           <div className="ss">{items.length} acara alumni</div>
         </div>
         {isAdmin ? (
-          <button className="btn ba" onClick={() => setShowForm(true)}>
+          <button className="btn ba" onClick={onCreate}>
             <Icon.Plus /> Tambah Agenda
           </button>
         ) : (
@@ -45,16 +44,26 @@ export function EventsPage({ items, isAdmin, onCreate, onDelete, onOpenLogin }) 
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
                     <h4 style={{ fontSize: 17, fontWeight: 700, marginBottom: 6 }}>{e.judul}</h4>
                     {isAdmin && (
-                      <button
-                        className="btn bgh bsm"
-                        style={{ padding: 4, color: "var(--err)" }}
-                        onClick={() => {
-                          if (confirm(`Hapus agenda "${e.judul}"?`)) onDelete(e.id);
-                        }}
-                        title="Hapus"
-                      >
-                        <Icon.Trash />
-                      </button>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <button
+                          className="btn bgh bsm"
+                          style={{ padding: 4 }}
+                          onClick={() => onEdit(e)}
+                          title="Edit"
+                        >
+                          <Icon.Edit />
+                        </button>
+                        <button
+                          className="btn bgh bsm"
+                          style={{ padding: 4, color: "var(--err)" }}
+                          onClick={() => {
+                            if (confirm(`Hapus agenda "${e.judul}"?`)) onDelete(e.id);
+                          }}
+                          title="Hapus"
+                        >
+                          <Icon.Trash />
+                        </button>
+                      </div>
                     )}
                   </div>
                   <p style={{ fontSize: 13, color: "var(--txm)", marginBottom: 10, lineHeight: 1.6 }}>{e.deskripsi}</p>
@@ -79,71 +88,6 @@ export function EventsPage({ items, isAdmin, onCreate, onDelete, onOpenLogin }) 
           ))}
         </div>
       )}
-
-      {showForm && (
-        <EventForm
-          onSave={async (item) => {
-            await onCreate(item);
-            setShowForm(false);
-          }}
-          onClose={() => setShowForm(false)}
-        />
-      )}
     </>
-  );
-}
-
-function EventForm({ onSave, onClose }) {
-  const [f, setF] = useState({ judul: "", tanggal: "", lokasi: "", deskripsi: "", biaya: "" });
-  const [saving, setSaving] = useState(false);
-  const u = (k, v) => setF((p) => ({ ...p, [k]: v }));
-
-  const submit = async () => {
-    setSaving(true);
-    try {
-      await onSave({ ...f, id: "e" + uid() });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Modal
-      title="Tambah Agenda"
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn bo" onClick={onClose}>
-            Batal
-          </button>
-          <button className="btn bp" onClick={submit} disabled={saving || !f.judul || !f.tanggal}>
-            {saving ? "Menyimpan..." : "Simpan"}
-          </button>
-        </>
-      }
-    >
-      <div className="fg">
-        <label className="fl">Judul Acara *</label>
-        <input className="fi" value={f.judul} onChange={(e) => u("judul", e.target.value)} />
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <div className="fg">
-          <label className="fl">Tanggal *</label>
-          <input className="fi" type="date" value={f.tanggal} onChange={(e) => u("tanggal", e.target.value)} />
-        </div>
-        <div className="fg">
-          <label className="fl">Biaya</label>
-          <input className="fi" value={f.biaya} onChange={(e) => u("biaya", e.target.value)} placeholder="Gratis / Rp 100.000" />
-        </div>
-      </div>
-      <div className="fg">
-        <label className="fl">Lokasi</label>
-        <input className="fi" value={f.lokasi} onChange={(e) => u("lokasi", e.target.value)} />
-      </div>
-      <div className="fg">
-        <label className="fl">Deskripsi</label>
-        <textarea className="ft" value={f.deskripsi} onChange={(e) => u("deskripsi", e.target.value)} />
-      </div>
-    </Modal>
   );
 }

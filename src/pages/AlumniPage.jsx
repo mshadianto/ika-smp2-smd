@@ -7,7 +7,7 @@ import { initials, waLink } from "../utils/format";
 // AlumniPage - directory + detail view
 // ============================================================
 
-export function AlumniPage({ alumni, onRegister, onEdit, detailId, setDetailId }) {
+export function AlumniPage({ alumni, isAdmin, onRegister, onEdit, detailId, setDetailId }) {
   const [q, setQ] = useState("");
   const [ang, setAng] = useState("Semua");
 
@@ -59,9 +59,11 @@ export function AlumniPage({ alumni, onRegister, onEdit, detailId, setDetailId }
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <button className="btn bo bsm" onClick={() => onEdit(detail)}>
-              <Icon.Edit /> Edit
-            </button>
+            {isAdmin && (
+              <button className="btn bo bsm" onClick={() => onEdit(detail)}>
+                <Icon.Edit /> Edit
+              </button>
+            )}
             {detail.telepon && (
               <a href={waLink(detail.telepon)} target="_blank" rel="noopener noreferrer" className="btn bp bsm" style={{ textDecoration: "none" }}>
                 <Icon.Phone /> WhatsApp
@@ -93,7 +95,20 @@ export function AlumniPage({ alumni, onRegister, onEdit, detailId, setDetailId }
       ) : (
         <div className="g2">
           {filtered.map((a) => (
-            <div key={a.id} className="card" style={{ cursor: "pointer" }} onClick={() => setDetailId(a.id)}>
+            <div key={a.id} className="card" style={{ cursor: "pointer", position: "relative" }} onClick={() => setDetailId(a.id)}>
+              {isAdmin && (
+                <button
+                  className="btn bgh bsm"
+                  style={{ position: "absolute", top: 10, right: 10, padding: 4 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(a);
+                  }}
+                  title="Edit"
+                >
+                  <Icon.Edit />
+                </button>
+              )}
               <div className="ac">
                 <div className="av">{initials(a.nama)}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>

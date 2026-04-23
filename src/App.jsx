@@ -12,7 +12,7 @@ import { Header } from "./components/Header";
 import { Toast, Spinner } from "./components/Primitives";
 import { Icon } from "./components/Icons";
 import { AdminLoginModal } from "./components/AdminLoginModal";
-import { AlumniForm, MarketForm, UmkmForm, GalleryForm, ForumThreadForm } from "./components/Forms";
+import { AlumniForm, MarketForm, UmkmForm, GalleryForm, ForumThreadForm, EventForm } from "./components/Forms";
 
 import { HomePage } from "./pages/HomePage";
 import { AlumniPage } from "./pages/AlumniPage";
@@ -63,8 +63,13 @@ export default function App() {
   const [showMarketForm, setShowMarketForm] = useState(false);
   const [editMarket, setEditMarket] = useState(null);
   const [showUmkmForm, setShowUmkmForm] = useState(false);
+  const [editUmkm, setEditUmkm] = useState(null);
   const [showGalleryForm, setShowGalleryForm] = useState(false);
+  const [editGallery, setEditGallery] = useState(null);
   const [showForumForm, setShowForumForm] = useState(false);
+  const [editThread, setEditThread] = useState(null);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [editEvent, setEditEvent] = useState(null);
 
   // --- Toast ---
   const { toast, showToast, hideToast } = useToast();
@@ -146,6 +151,7 @@ export default function App() {
         {page === "alumni" && (
           <AlumniPage
             alumni={alumni.data}
+            isAdmin={isAdmin}
             detailId={alumniDetailId}
             setDetailId={setAlumniDetailId}
             onRegister={() => {
@@ -190,7 +196,14 @@ export default function App() {
             items={umkm.data}
             alumni={alumni.data}
             isAdmin={isAdmin}
-            onCreate={() => setShowUmkmForm(true)}
+            onCreate={() => {
+              setEditUmkm(null);
+              setShowUmkmForm(true);
+            }}
+            onEdit={(u) => {
+              setEditUmkm(u);
+              setShowUmkmForm(true);
+            }}
             onDelete={async (id) => {
               if (!can(CAPABILITIES.UMKM_DELETE)) {
                 showToast("Hanya admin yang dapat menghapus", "err");
@@ -208,7 +221,14 @@ export default function App() {
             albums={gallery.data}
             alumni={alumni.data}
             isAdmin={isAdmin}
-            onCreate={() => setShowGalleryForm(true)}
+            onCreate={() => {
+              setEditGallery(null);
+              setShowGalleryForm(true);
+            }}
+            onEdit={(g) => {
+              setEditGallery(g);
+              setShowGalleryForm(true);
+            }}
             onDelete={async (id) => {
               if (!can(CAPABILITIES.GALLERY_DELETE)) {
                 showToast("Hanya admin yang dapat menghapus album", "err");
@@ -227,7 +247,14 @@ export default function App() {
             isAdmin={isAdmin}
             viewThread={viewThread}
             setViewThread={setViewThread}
-            onCreateThread={() => setShowForumForm(true)}
+            onCreateThread={() => {
+              setEditThread(null);
+              setShowForumForm(true);
+            }}
+            onEditThread={(t) => {
+              setEditThread(t);
+              setShowForumForm(true);
+            }}
             onReply={async (threadId, reply) => {
               const r = await forumService.addReply(threadId, reply);
               forum.refresh();
@@ -258,13 +285,21 @@ export default function App() {
           <EventsPage
             items={events.data}
             isAdmin={isAdmin}
-            onCreate={async (item) => {
+            onCreate={() => {
               if (!can(CAPABILITIES.EVENT_CREATE)) {
                 showToast("Hanya admin yang dapat menambah agenda", "err");
                 return;
               }
-              await events.create(item);
-              showToast("Agenda ditambahkan");
+              setEditEvent(null);
+              setShowEventForm(true);
+            }}
+            onEdit={(e) => {
+              if (!can(CAPABILITIES.EVENT_UPDATE)) {
+                showToast("Hanya admin yang dapat mengedit agenda", "err");
+                return;
+              }
+              setEditEvent(e);
+              setShowEventForm(true);
             }}
             onDelete={async (id) => {
               if (!isAdmin) return;
@@ -329,34 +364,81 @@ export default function App() {
 
       {showUmkmForm && (
         <UmkmForm
+          item={editUmkm}
           alumni={alumni.data}
-          onClose={() => setShowUmkmForm(false)}
+          onClose={() => {
+            setShowUmkmForm(false);
+            setEditUmkm(null);
+          }}
           onSave={async (item) => {
-            await umkm.create(item);
-            showToast("UMKM terdaftar");
+            if (editUmkm) {
+              await umkm.update(item.id, item);
+              showToast("UMKM diperbarui");
+            } else {
+              await umkm.create(item);
+              showToast("UMKM terdaftar");
+            }
           }}
         />
       )}
 
       {showGalleryForm && (
         <GalleryForm
+          item={editGallery}
           alumni={alumni.data}
-          onClose={() => setShowGalleryForm(false)}
+          onClose={() => {
+            setShowGalleryForm(false);
+            setEditGallery(null);
+          }}
           onSave={async (item) => {
-            await gallery.create(item);
-            showToast("Album terupload");
+            if (editGallery) {
+              await gallery.update(editGallery.id, item);
+              showToast("Album diperbarui");
+            } else {
+              await gallery.create(item);
+              showToast("Album terupload");
+            }
           }}
         />
       )}
 
       {showForumForm && (
         <ForumThreadForm
+          item={editThread}
           alumni={alumni.data}
-          onClose={() => setShowForumForm(false)}
+          onClose={() => {
+            setShowForumForm(false);
+            setEditThread(null);
+          }}
           onSave={async (item) => {
-            await forumService.createThread(item);
-            forum.refresh();
-            showToast("Topik dibuat");
+            if (editThread) {
+              await forumService.updateThread(editThread.id, item);
+              forum.refresh();
+              showToast("Topik diperbarui");
+            } else {
+              await forumService.createThread(item);
+              forum.refresh();
+              showToast("Topik dibuat");
+            }
+          }}
+        />
+      )}
+
+      {showEventForm && isAdmin && (
+        <EventForm
+          item={editEvent}
+          onClose={() => {
+            setShowEventForm(false);
+            setEditEvent(null);
+          }}
+          onSave={async (item) => {
+            if (editEvent) {
+              await events.update(editEvent.id, item);
+              showToast("Agenda diperbarui");
+            } else {
+              await events.create(item);
+              showToast("Agenda ditambahkan");
+            }
           }}
         />
       )}

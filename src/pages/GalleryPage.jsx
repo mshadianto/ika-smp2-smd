@@ -10,7 +10,7 @@ import { KAT_GALLERY } from "../config/constants";
 // Anyone can upload; admin can delete.
 // ============================================================
 
-export function GalleryPage({ albums, alumni, isAdmin, onCreate, onDelete }) {
+export function GalleryPage({ albums, alumni, isAdmin, onCreate, onEdit, onDelete }) {
   const [kat, setKat] = useState("Semua");
   const [openAlbum, setOpenAlbum] = useState(null);
   const [lightboxIdx, setLightboxIdx] = useState(null);
@@ -41,17 +41,22 @@ export function GalleryPage({ albums, alumni, isAdmin, onCreate, onDelete }) {
             </div>
           </div>
           {isAdmin && (
-            <button
-              className="btn bdng bsm"
-              onClick={() => {
-                if (confirm(`Hapus album "${album.judul}"?`)) {
-                  onDelete(album.id);
-                  setOpenAlbum(null);
-                }
-              }}
-            >
-              <Icon.Trash /> Hapus Album
-            </button>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button className="btn bo bsm" onClick={() => onEdit(album)}>
+                <Icon.Edit /> Edit
+              </button>
+              <button
+                className="btn bdng bsm"
+                onClick={() => {
+                  if (confirm(`Hapus album "${album.judul}"?`)) {
+                    onDelete(album.id);
+                    setOpenAlbum(null);
+                  }
+                }}
+              >
+                <Icon.Trash /> Hapus Album
+              </button>
+            </div>
           )}
         </div>
 

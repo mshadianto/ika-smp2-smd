@@ -9,7 +9,7 @@ import { KAT_FORUM } from "../config/constants";
 // Anyone can post; admin can delete.
 // ============================================================
 
-export function ForumPage({ threads, alumni, isAdmin, onCreateThread, onReply, onLikeThread, onLikeReply, onDeleteThread, viewThread, setViewThread }) {
+export function ForumPage({ threads, alumni, isAdmin, onCreateThread, onEditThread, onReply, onLikeThread, onLikeReply, onDeleteThread, viewThread, setViewThread }) {
   const [q, setQ] = useState("");
   const [kat, setKat] = useState("Semua");
   const [replyText, setReplyText] = useState("");
@@ -79,18 +79,27 @@ export function ForumPage({ threads, alumni, isAdmin, onCreateThread, onReply, o
                 <Icon.MsgCircle /> {(current.replies || []).length} balasan
               </span>
               {isAdmin && (
-                <button
-                  className="fst"
-                  style={{ color: "var(--err)", marginLeft: "auto" }}
-                  onClick={() => {
-                    if (confirm("Hapus topik ini?")) {
-                      onDeleteThread(current.id);
-                      setViewThread(null);
-                    }
-                  }}
-                >
-                  <Icon.Trash /> Hapus
-                </button>
+                <>
+                  <button
+                    className="fst"
+                    style={{ marginLeft: "auto" }}
+                    onClick={() => onEditThread(current)}
+                  >
+                    <Icon.Edit /> Edit
+                  </button>
+                  <button
+                    className="fst"
+                    style={{ color: "var(--err)" }}
+                    onClick={() => {
+                      if (confirm("Hapus topik ini?")) {
+                        onDeleteThread(current.id);
+                        setViewThread(null);
+                      }
+                    }}
+                  >
+                    <Icon.Trash /> Hapus
+                  </button>
+                </>
               )}
             </div>
           </div>
@@ -188,7 +197,33 @@ export function ForumPage({ threads, alumni, isAdmin, onCreateThread, onReply, o
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {filtered.map((t) => (
-            <div key={t.id} className={`fc${t.pinned ? " pin" : ""}`}>
+            <div key={t.id} className={`fc${t.pinned ? " pin" : ""}`} style={{ position: "relative" }}>
+              {isAdmin && (
+                <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: 4, zIndex: 1 }}>
+                  <button
+                    className="btn bgh bsm"
+                    style={{ padding: 4 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditThread(t);
+                    }}
+                    title="Edit"
+                  >
+                    <Icon.Edit />
+                  </button>
+                  <button
+                    className="btn bgh bsm"
+                    style={{ padding: 4, color: "var(--err)" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (confirm(`Hapus topik "${t.judul}"?`)) onDeleteThread(t.id);
+                    }}
+                    title="Hapus"
+                  >
+                    <Icon.Trash />
+                  </button>
+                </div>
+              )}
               <div className="fhd" onClick={() => setViewThread(t)}>
                 <div className="fme">
                   {t.pinned && (
