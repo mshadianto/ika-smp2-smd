@@ -7,7 +7,7 @@ export const KAT_UMKM = ["Semua", "Kuliner", "Fashion", "Teknologi", "Konstruksi
 export const KAT_GALLERY = ["Semua", "Reuni", "Kegiatan", "Nostalgia", "Lainnya"];
 export const KAT_FORUM = ["Semua", "Reuni", "Karir", "Promo UMKM", "Umum", "Tanya Jawab"];
 
-export const KELAS_OPTIONS = ["3A", "3B", "3C", "3D", "3E", "3F", "3G", "3H"];
+export const KELAS_OPTIONS = ["3A", "3B", "3C", "3D", "3E", "3F", "3G", "3H", "3I", "3J"];
 
 // YouTube video for landing page
 export const HERO_VIDEO_ID = "W8IBBXIEnLA";
@@ -41,32 +41,42 @@ export const SEED_EVENTS = [
 ];
 
 export const SEED_GALLERY = [
-  { id: "g1", judul: "Reuni Akbar 2024", album: "Reuni", deskripsi: "Dokumentasi reuni akbar, 200+ alumni hadir.", tanggal: "2024-08-17", uploadBy: "a3", photos: [
-    { id: "p1", caption: "Upacara pembukaan", color: "#1B3A5C" },
-    { id: "p2", caption: "Foto bersama angkatan 95", color: "#2980B9" },
-    { id: "p3", caption: "Pentas seni alumni", color: "#E8B84B" },
-    { id: "p4", caption: "Makan bersama", color: "#27AE60" },
-  ]},
-  { id: "g2", judul: "Bakti Sosial 2025", album: "Kegiatan", deskripsi: "Kunjungan ke Panti Asuhan Kasih Sayang.", tanggal: "2025-03-22", uploadBy: "a2", photos: [
-    { id: "p5", caption: "Pembagian sembako", color: "#3498DB" },
-    { id: "p6", caption: "Bermain dengan anak-anak", color: "#5DADE2" },
-    { id: "p7", caption: "Foto bersama pengurus", color: "#1A5276" },
-  ]},
-  { id: "g3", judul: "Kenangan SMP Negeri 2", album: "Nostalgia", deskripsi: "Foto kenangan masa sekolah.", tanggal: "2024-12-01", uploadBy: "a1", photos: [
-    { id: "p8", caption: "Gedung sekolah", color: "#154360" },
-    { id: "p9", caption: "Lapangan upacara", color: "#1F618D" },
-    { id: "p10", caption: "Perpustakaan", color: "#D4AC0D" },
-    { id: "p11", caption: "Ruang kelas 3A", color: "#2E86C1" },
-    { id: "p12", caption: "Kantin favorit", color: "#148F77" },
-  ]},
+  {
+    id: "g1", judul: "Reuni Akbar 2024", album: "Reuni", deskripsi: "Dokumentasi reuni akbar, 200+ alumni hadir.", tanggal: "2024-08-17", uploadBy: "a3", photos: [
+      { id: "p1", caption: "Upacara pembukaan", color: "#1B3A5C" },
+      { id: "p2", caption: "Foto bersama angkatan 95", color: "#2980B9" },
+      { id: "p3", caption: "Pentas seni alumni", color: "#E8B84B" },
+      { id: "p4", caption: "Makan bersama", color: "#27AE60" },
+    ]
+  },
+  {
+    id: "g2", judul: "Bakti Sosial 2025", album: "Kegiatan", deskripsi: "Kunjungan ke Panti Asuhan Kasih Sayang.", tanggal: "2025-03-22", uploadBy: "a2", photos: [
+      { id: "p5", caption: "Pembagian sembako", color: "#3498DB" },
+      { id: "p6", caption: "Bermain dengan anak-anak", color: "#5DADE2" },
+      { id: "p7", caption: "Foto bersama pengurus", color: "#1A5276" },
+    ]
+  },
+  {
+    id: "g3", judul: "Kenangan SMP Negeri 2", album: "Nostalgia", deskripsi: "Foto kenangan masa sekolah.", tanggal: "2024-12-01", uploadBy: "a1", photos: [
+      { id: "p8", caption: "Gedung sekolah", color: "#154360" },
+      { id: "p9", caption: "Lapangan upacara", color: "#1F618D" },
+      { id: "p10", caption: "Perpustakaan", color: "#D4AC0D" },
+      { id: "p11", caption: "Ruang kelas 3A", color: "#2E86C1" },
+      { id: "p12", caption: "Kantin favorit", color: "#148F77" },
+    ]
+  },
 ];
 
 export const SEED_FORUM = [
-  { id: "f1", authorId: "a3", judul: "Persiapan Reuni Akbar 2026", kategori: "Reuni", konten: "Assalamualaikum rekan-rekan alumni. Reuni akbar 17 Agustus 2026. Mari diskusikan:\n\n1. Konsep acara\n2. Iuran per orang\n3. Susunan panitia\n4. Undangan guru", created: "2026-02-15T10:00:00", pinned: true, likes: 12, replies: [
-    { id: "r1", authorId: "a1", konten: "Siap bantu seksi konsumsi. Iuran Rp 150.000 termasuk makan siang dan kaos?", created: "2026-02-15T14:30:00", likes: 8 },
-    { id: "r2", authorId: "a2", konten: "Setuju! Saya usulkan sesi kesehatan gratis — cek tensi dan gula darah.", created: "2026-02-16T09:15:00", likes: 15 },
-  ]},
-  { id: "f2", authorId: "a5", judul: "Lowongan Kerja IT untuk Anak Alumni", kategori: "Karir", konten: "Kantor saya di Bandung buka lowongan:\n- Junior Web Developer\n- UI/UX Designer\n- Digital Marketing\n\nBisa remote dari Samarinda.", created: "2026-03-01T08:00:00", pinned: false, likes: 20, replies: [
-    { id: "r4", authorId: "a6", konten: "Anak saya baru lulus SMK multimedia, boleh kirim CV?", created: "2026-03-01T12:00:00", likes: 3 },
-  ]},
+  {
+    id: "f1", authorId: "a3", judul: "Persiapan Reuni Akbar 2026", kategori: "Reuni", konten: "Assalamualaikum rekan-rekan alumni. Reuni akbar 17 Agustus 2026. Mari diskusikan:\n\n1. Konsep acara\n2. Iuran per orang\n3. Susunan panitia\n4. Undangan guru", created: "2026-02-15T10:00:00", pinned: true, likes: 12, replies: [
+      { id: "r1", authorId: "a1", konten: "Siap bantu seksi konsumsi. Iuran Rp 150.000 termasuk makan siang dan kaos?", created: "2026-02-15T14:30:00", likes: 8 },
+      { id: "r2", authorId: "a2", konten: "Setuju! Saya usulkan sesi kesehatan gratis — cek tensi dan gula darah.", created: "2026-02-16T09:15:00", likes: 15 },
+    ]
+  },
+  {
+    id: "f2", authorId: "a5", judul: "Lowongan Kerja IT untuk Anak Alumni", kategori: "Karir", konten: "Kantor saya di Bandung buka lowongan:\n- Junior Web Developer\n- UI/UX Designer\n- Digital Marketing\n\nBisa remote dari Samarinda.", created: "2026-03-01T08:00:00", pinned: false, likes: 20, replies: [
+      { id: "r4", authorId: "a6", konten: "Anak saya baru lulus SMK multimedia, boleh kirim CV?", created: "2026-03-01T12:00:00", likes: 3 },
+    ]
+  },
 ];
