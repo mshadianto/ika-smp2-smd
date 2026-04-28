@@ -21,6 +21,7 @@ import { UmkmPage } from "./pages/UmkmPage";
 import { GalleryPage } from "./pages/GalleryPage";
 import { ForumPage } from "./pages/ForumPage";
 import { EventsPage } from "./pages/EventsPage";
+import { AboutPage } from "./pages/AboutPage";
 
 import logoAsset from "./assets/logo-ika.png";
 
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { id: "gallery", label: "Gallery", icon: <Icon.Image /> },
   { id: "forum", label: "Forum", icon: <Icon.Chat /> },
   { id: "events", label: "Agenda", icon: <Icon.Cal /> },
+  { id: "about", label: "Tentang", icon: <Icon.Info /> },
 ];
 
 export default function App() {
@@ -280,6 +282,8 @@ export default function App() {
             }}
           />
         )}
+
+        {page === "about" && <AboutPage logoUrl={logoUrl} />}
 
         {page === "events" && (
           <EventsPage
